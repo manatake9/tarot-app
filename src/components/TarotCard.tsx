@@ -14,7 +14,7 @@ export default function TarotCard({
   return (
     <div className="bg-white rounded-xl p-4 shadow-xl">
       <Image
-        src={isOpen ? image : "/cards/back.jpg"}
+        src={isOpen ? image : "/cards/back.png"}
         alt={name}
         width={256}
         height={400}

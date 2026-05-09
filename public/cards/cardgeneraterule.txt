@@ -1,0 +1,83 @@
+タロットカード画像生成プロンプト
+・ basePrompt
+minimal fantasy tarot card illustration,
+inspired by Rider-Waite tarot symbolism,
+quiet cinematic atmosphere,
+soft volumetric lighting,
+minimal composition,
+subtle surrealism,
+symbolic negative space,
+clean silhouette,
+muted color palette,
+gentle texture,
+dreamlike environment,
+balanced vertical composition,
+medieval-inspired clothing,
+no modern fashion,
+emotion conveyed through posture and lighting,
+high visual clarity,
+ornate thin frame border,
+small margin around artwork,
+no text,
+no title,
+no watermark,
+no logo
+
+・cameraPrompt
+centered composition,
+single main subject,
+cinematic framing,
+slightly low camera angle,
+strong silhouette readability,
+subject occupying middle 60 percent of frame,
+large atmospheric background,
+soft depth perspective,
+calm empty space around subject
+
+・framePrompt
+thin decorative border,
+elegant line art frame,
+subtle vintage ornament,
+2.5 percent outer margin,
+symmetrical corner decoration,
+minimal arcane motifs,
+dark ivory frame color,
+clean geometric balance
+
+・cardPrompt
+サイズ:
+1024 × 1792
+比率:
+4:7
+外枠:
+24px
+内側余白:
+36px
+角丸:
+18px
+
+・negativePrompt
+modern clothes,
+cyberpunk,
+excessive jewelry,
+heavy armor,
+overcrowded composition,
+busy background,
+multiple characters,
+text,
+title,
+watermark,
+logo,
+photorealistic skin pores,
+hyper detailed face,
+exaggerated anime expression,
+beard,
+mustache,
+muscular bodybuilder physique,
+extra fingers,
+deformed hands,
+blurry,
+low quality,
+oversaturated colors
+
+・以下はカードごとに個別で追加すること
