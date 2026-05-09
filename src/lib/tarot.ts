@@ -12,5 +12,12 @@ export const cards = [
     image: "/cards/THE MAGICIAN.png",
     meaningUp: "創造力",
     meaningRev: "空回り"
+  },
+  {
+    id: 2,
+    name: "The High Priestess",
+    image: "/cards/THE HIGH PRIESTESS.png",
+    meaningUp: "内面の知恵",
+    meaningRev: "無知"
   }
 ]
