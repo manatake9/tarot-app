@@ -6,8 +6,12 @@ export type TarotCard = {
   image: string
   symbolism: string[]
   atmosphere: string[]
-  observation: string
+  observationAxes: string[]
   reflectionPrompts: string[]
+  tensions: {
+    expansive: string[]
+    restrictive: string[]
+  }
   imagePrompt: string
 }
 
@@ -26,12 +30,19 @@ export const cards: TarotCard[] = [
       "0",
     ],
     atmosphere: ["始まり", "未定義", "軽さ", "境界", "飛躍"],
-    observation:
-      "崖の縁に立つ姿は、危うさにも、まだ名前のついていない自由にも見える。白い犬は警告者かもしれないし、旅に同行する存在かもしれない。ここでは結論を急がず、まだ意味が固まっていない状態そのものを眺めてみる。",
+    observationAxes: [
+      "崖は危険にも、開けた視界にも見える",
+      "白い犬は警告者にも、同行者にも見える",
+      "小さな荷物は身軽さと準備不足の両方を示す",
+    ],
     reflectionPrompts: [
       "いま自分が「危険」と呼んでいるものは、本当に危険なのか。",
       "身軽でいるために、今日いったん置いておける荷物は何か。",
     ],
+    tensions: {
+      expansive: ["自由", "未定義", "開かれた可能性"],
+      restrictive: ["無防備", "見落とし", "地面からの距離"],
+    },
     imagePrompt:
       "A quiet philosophical tarot card of The Fool at the edge of a cliff, small white dog, pale sun, minimal mystical atmosphere, deep violet night, contemplative mood",
   },
@@ -50,12 +61,19 @@ export const cards: TarotCard[] = [
       "1",
     ],
     atmosphere: ["媒介", "集中", "変換", "意志", "手ざわり"],
-    observation:
-      "上と下をつなぐ手の形は、何かを支配する姿にも、ただ通路になっている姿にも見える。机の道具は力の証明ではなく、注意を向ける対象として置かれている。いま持っているものをどう使うか以前に、それをどのように見ているかを観察してみる。",
+    observationAxes: [
+      "上と下をつなぐ手は支配にも通路にも見える",
+      "道具は力の証明ではなく、注意を向ける対象として置かれている",
+      "無限大の記号は可能性と反復の両方を含む",
+    ],
     reflectionPrompts: [
       "すでに手元にあるのに、まだ道具として見えていないものは何か。",
       "今日の自分は、何を変えようとするより前に、何をよく見る必要があるか。",
     ],
+    tensions: {
+      expansive: ["媒介", "集中", "形にする力"],
+      restrictive: ["操作", "虚勢", "意志への過信"],
+    },
     imagePrompt:
       "A restrained philosophical tarot card of The Magician, table with symbolic tools, one hand upward and one downward, violet-black ambience, subtle glow, contemplative composition",
   },
@@ -75,12 +93,19 @@ export const cards: TarotCard[] = [
       "2",
     ],
     atmosphere: ["静寂", "保留", "奥行き", "直感", "境界"],
-    observation:
-      "黒と白の柱のあいだに座る姿は、どちらか一方を選ぶ前の静けさを保っている。巻物は開かれているようで、すべてを見せてはいない。見えないものを暴くのではなく、まだ見えないまま存在しているものに気づく時間として読む。",
+    observationAxes: [
+      "黒と白の柱は対立ではなく、間に残る静けさを作る",
+      "巻物は開示と非開示の境目にある",
+      "ベールの奥は、暴く対象ではなく待つ対象として見える",
+    ],
     reflectionPrompts: [
       "今日、すぐに言葉にしないほうがよい感覚はあるか。",
       "判断を保留したとき、そこに残る微かな違和感や静けさは何か。",
     ],
+    tensions: {
+      expansive: ["静寂", "直感", "奥行き"],
+      restrictive: ["閉ざされること", "曖昧さ", "言葉にならなさ"],
+    },
     imagePrompt:
       "A quiet philosophical tarot card of The High Priestess between black and white pillars, scroll, moon crown, veil, dark violet starlit ambience, subtle glow",
   },

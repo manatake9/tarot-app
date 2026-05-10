@@ -68,9 +68,16 @@ export default function Page() {
               {drawnCard.card.name}
             </h2>
 
-            <p className="mt-6 text-sm leading-8 text-violet-50/68">
-              {drawnCard.card.observation}
-            </p>
+            <div className="mt-6">
+              <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
+                observation axes
+              </h3>
+              <ul className="mt-4 space-y-3 text-sm leading-7 text-violet-50/68">
+                {drawnCard.card.observationAxes.map((axis) => (
+                  <li key={axis}>— {axis}</li>
+                ))}
+              </ul>
+            </div>
 
             <div className="mt-7 grid gap-5 sm:grid-cols-2">
               <div>
@@ -95,6 +102,40 @@ export default function Page() {
                 </h3>
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {drawnCard.card.atmosphere.map((word) => (
+                    <li
+                      key={word}
+                      className="rounded-full border border-violet-100/10 bg-violet-100/[0.06] px-3 py-1 text-xs text-violet-50/62"
+                    >
+                      {word}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-7 grid gap-5 border-t border-violet-100/10 pt-6 sm:grid-cols-2">
+              <div>
+                <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
+                  expansive
+                </h3>
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {drawnCard.card.tensions.expansive.map((word) => (
+                    <li
+                      key={word}
+                      className="rounded-full border border-violet-100/10 bg-white/[0.035] px-3 py-1 text-xs text-violet-50/62"
+                    >
+                      {word}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
+                  restrictive
+                </h3>
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {drawnCard.card.tensions.restrictive.map((word) => (
                     <li
                       key={word}
                       className="rounded-full border border-violet-100/10 bg-violet-100/[0.06] px-3 py-1 text-xs text-violet-50/62"
