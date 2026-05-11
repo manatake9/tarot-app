@@ -3,32 +3,50 @@
 import { useEffect, useState } from "react"
 
 import TarotCard from "@/components/TarotCard"
-import { drawCard, type DrawResult } from "@/lib/draw"
+import {
+  getUserId,
+  hasDrawnToday,
+  markDrawnToday,
+} from "@/lib/anonymous-user"
+import {
+  drawDailyCard,
+  getLocalDateKey,
+  type DrawResult,
+  type SpreadType,
+} from "@/lib/draw"
+
+const spreadType: SpreadType = "daily"
 
 export default function Page() {
   const [drawResult, setDrawResult] = useState<DrawResult | null>(null)
+  const [isReady, setIsReady] = useState(false)
+  const [hasDrawn, setHasDrawn] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [showReading, setShowReading] = useState(false)
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      setDrawResult(drawCard())
+      const dateKey = getLocalDateKey()
+      const userId = getUserId()
+      const alreadyDrawn = hasDrawnToday(dateKey, spreadType)
+
+      setDrawResult(drawDailyCard({ userId, dateKey, spreadType }))
+      setHasDrawn(alreadyDrawn)
+      setIsOpen(alreadyDrawn)
+      setShowReading(false)
+      setIsReady(true)
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
   }, [])
 
-  const handleDraw = () => {
-    setIsOpen(false)
-    setShowReading(false)
-    setDrawResult(drawCard())
-  }
-
   const handleOpen = () => {
-    if (!drawResult) {
-      setDrawResult(drawCard())
+    if (!drawResult || hasDrawn) {
+      return
     }
 
+    markDrawnToday(drawResult.dateKey, drawResult.spreadType)
+    setHasDrawn(true)
     setIsOpen(true)
     setShowReading(false)
   }
@@ -44,13 +62,13 @@ export default function Page() {
       <section className="relative z-10 flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-9 text-center">
         <div className="max-w-2xl space-y-4 animate-slow-fade">
           <p className="text-[0.7rem] uppercase tracking-[0.46em] text-violet-100/45">
-            Daily Draw / Observation
+            Daily Draw / Anonymous Seed
           </p>
           <h1 className="text-4xl font-light tracking-[0.06em] text-violet-50 sm:text-5xl">
             今日の一枚を観察する
           </h1>
           <p className="mx-auto max-w-xl text-sm leading-8 text-violet-100/62 sm:text-base">
-            まずカードだけを見て、自分の中に浮かぶ言葉を拾ってください。解説はその後の答え合わせとして開けます。
+            ログインなしで、あなたの端末にだけ匿名IDを保存します。同じ日は同じカードになり、解説はカードを読んだ後に開けます。
           </p>
         </div>
 
@@ -64,18 +82,15 @@ export default function Page() {
 
             <div className="flex flex-wrap items-center justify-center gap-3 animate-slow-fade [animation-delay:220ms]">
               <button
-                onClick={handleDraw}
-                className="rounded-full border border-violet-100/12 bg-white/[0.04] px-5 py-3 text-sm text-violet-50/75 backdrop-blur transition duration-500 hover:border-violet-100/25 hover:bg-white/[0.07] focus:outline-none focus:ring-1 focus:ring-violet-100/45"
-              >
-                引き直す
-              </button>
-
-              <button
                 onClick={handleOpen}
-                disabled={isOpen || !drawResult}
+                disabled={!isReady || hasDrawn || !drawResult}
                 className="rounded-full border border-violet-100/20 bg-violet-100/90 px-7 py-3 text-sm font-medium text-zinc-950 shadow-[0_0_28px_rgba(167,139,250,0.16)] transition duration-700 hover:bg-white hover:shadow-[0_0_36px_rgba(196,181,253,0.2)] focus:outline-none focus:ring-1 focus:ring-violet-100 disabled:cursor-default disabled:bg-violet-100/35 disabled:text-violet-950/70 disabled:shadow-none"
               >
-                {isOpen ? "開かれました" : "静かに開く"}
+                {!isReady
+                  ? "準備中"
+                  : hasDrawn
+                    ? "今日は引き終わりました"
+                    : "今日のカードを引く"}
               </button>
 
               {isOpen ? (
@@ -87,6 +102,12 @@ export default function Page() {
                 </button>
               ) : null}
             </div>
+
+            {drawResult ? (
+              <p className="max-w-sm text-center text-xs leading-6 text-violet-100/38">
+                {drawResult.dateKey} の一枚です。日付が変わるまで引き直しはできません。
+              </p>
+            ) : null}
           </div>
 
           <aside

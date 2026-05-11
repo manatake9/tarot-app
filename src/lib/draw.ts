@@ -1,7 +1,11 @@
 import { cards, type TarotCard } from "./tarot"
 
+export type SpreadType = "daily"
+
 export type DrawResult = {
   id: string
+  dateKey: string
+  spreadType: SpreadType
   card: TarotCard
   reversed: boolean
   keyword: string
@@ -11,23 +15,69 @@ export type DrawResult = {
   createdAt: string
 }
 
-function pickRandom<T>(items: T[]) {
-  return items[Math.floor(Math.random() * items.length)]
+type DailyDrawInput = {
+  userId: string
+  dateKey?: string
+  spreadType?: SpreadType
 }
 
-export function drawCard(): DrawResult {
-  const card = pickRandom(cards)
-  const reversed = Math.random() < 0.5
+function hashString(value: string) {
+  let hash = 2166136261
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return hash >>> 0
+}
+
+function createSeededRandom(seed: string) {
+  let state = hashString(seed)
+
+  return () => {
+    state += 0x6d2b79f5
+    let value = state
+    value = Math.imul(value ^ (value >>> 15), value | 1)
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61)
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function pickSeeded<T>(items: T[], random: () => number) {
+  return items[Math.floor(random() * items.length)]
+}
+
+export function getLocalDateKey(date = new Date()) {
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, "0")
+  const day = `${date.getDate()}`.padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+export function drawDailyCard({
+  userId,
+  dateKey = getLocalDateKey(),
+  spreadType = "daily",
+}: DailyDrawInput): DrawResult {
+  const seed = `${userId}:${dateKey}:${spreadType}`
+  const random = createSeededRandom(seed)
+  const card = pickSeeded(cards, random)
+  const reversed = random() < 0.5
   const tensionWords = reversed ? card.tensions.restrictive : card.tensions.expansive
 
   return {
-    id: crypto.randomUUID(),
+    id: seed,
+    dateKey,
+    spreadType,
     card,
     reversed,
-    keyword: pickRandom([...card.keywords, ...tensionWords]),
-    observation: pickRandom(card.observationAxes),
-    question: pickRandom(card.reflectionPrompts),
-    answerNote: pickRandom(card.answerNotes),
-    createdAt: new Date().toISOString(),
+    keyword: pickSeeded([...card.keywords, ...tensionWords], random),
+    observation: pickSeeded(card.observationAxes, random),
+    question: pickSeeded(card.reflectionPrompts, random),
+    answerNote: pickSeeded(card.answerNotes, random),
+    createdAt: dateKey,
   }
 }
+
+export const drawCard = drawDailyCard
