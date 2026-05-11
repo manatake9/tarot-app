@@ -135,6 +135,10 @@ body {
   border-radius: 1rem;
 }
 
+.tarot-card-image.is-reversed {
+  transform: rotate(180deg);
+}
+
 .tarot-card-caption {
   min-height: 4.5rem;
   opacity: 0.56;
