@@ -1,11 +1,12 @@
-import { cards, type TarotCard } from "./tarot"
+import { getCardsForDeck, type DeckType, type TarotCard } from "./tarot"
 
-export type SpreadType = "daily"
+export type SpreadType = "simple" | "detailed"
 
 export type DrawResult = {
   id: string
   dateKey: string
   spreadType: SpreadType
+  deckType: DeckType
   card: TarotCard
   reversed: boolean
   keyword: string
@@ -58,11 +59,12 @@ export function getLocalDateKey(date = new Date()) {
 export function drawDailyCard({
   userId,
   dateKey = getLocalDateKey(),
-  spreadType = "daily",
+  spreadType = "simple",
 }: DailyDrawInput): DrawResult {
   const seed = `${userId}:${dateKey}:${spreadType}`
   const random = createSeededRandom(seed)
-  const card = pickSeeded(cards, random)
+  const deckType: DeckType = spreadType === "detailed" ? "full" : "major"
+  const card = pickSeeded(getCardsForDeck(deckType), random)
   const reversed = random() < 0.5
   const tensionWords = reversed ? card.tensions.restrictive : card.tensions.expansive
 
@@ -70,6 +72,7 @@ export function drawDailyCard({
     id: seed,
     dateKey,
     spreadType,
+    deckType,
     card,
     reversed,
     keyword: pickSeeded([...card.keywords, ...tensionWords], random),

@@ -15,9 +15,8 @@ import {
   type SpreadType,
 } from "@/lib/draw"
 
-const spreadType: SpreadType = "daily"
-
 export default function Page() {
+  const [spreadType, setSpreadType] = useState<SpreadType>("simple")
   const [drawResult, setDrawResult] = useState<DrawResult | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [hasDrawn, setHasDrawn] = useState(false)
@@ -38,7 +37,7 @@ export default function Page() {
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
-  }, [])
+  }, [spreadType])
 
   const handleOpen = () => {
     if (!drawResult || hasDrawn) {
@@ -48,6 +47,17 @@ export default function Page() {
     markDrawnToday(drawResult.dateKey, drawResult.spreadType)
     setHasDrawn(true)
     setIsOpen(true)
+    setShowReading(false)
+  }
+
+  const handleSpreadTypeChange = (nextSpreadType: SpreadType) => {
+    if (nextSpreadType === spreadType) {
+      return
+    }
+
+    setSpreadType(nextSpreadType)
+    setIsReady(false)
+    setIsOpen(false)
     setShowReading(false)
   }
 
@@ -81,6 +91,34 @@ export default function Page() {
             />
 
             <div className="flex flex-wrap items-center justify-center gap-3 animate-slow-fade [animation-delay:220ms]">
+              <div
+                className="grid grid-cols-2 overflow-hidden rounded-full border border-violet-100/15 bg-white/[0.045] p-1 text-sm backdrop-blur"
+                aria-label="占い方"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSpreadTypeChange("simple")}
+                  className={`rounded-full px-4 py-2 transition duration-500 focus:outline-none focus:ring-1 focus:ring-violet-100/45 ${
+                    spreadType === "simple"
+                      ? "bg-violet-100/90 text-zinc-950"
+                      : "text-violet-50/68 hover:bg-white/[0.07]"
+                  }`}
+                >
+                  簡単に占う
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSpreadTypeChange("detailed")}
+                  className={`rounded-full px-4 py-2 transition duration-500 focus:outline-none focus:ring-1 focus:ring-violet-100/45 ${
+                    spreadType === "detailed"
+                      ? "bg-violet-100/90 text-zinc-950"
+                      : "text-violet-50/68 hover:bg-white/[0.07]"
+                  }`}
+                >
+                  詳細に占う
+                </button>
+              </div>
+
               <button
                 onClick={handleOpen}
                 disabled={!isReady || hasDrawn || !drawResult}
