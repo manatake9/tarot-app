@@ -3,7 +3,7 @@ import "./globals.css"
 
 export const metadata: Metadata = {
   title: "Daily Tarot",
-  description: "光と余韻の中で今日のタロットカードをめくるアプリ",
+  description: "今日のタロットカードを静かにめくるアプリ",
 }
 
 export default function RootLayout({

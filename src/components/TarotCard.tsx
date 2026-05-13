@@ -4,18 +4,26 @@ import type { TarotCard as TarotCardData } from "@/lib/tarot"
 
 type Props = {
   card?: TarotCardData
+  isDrawing?: boolean
   isOpen: boolean
   reversed?: boolean
 }
 
-export default function TarotCard({ card, isOpen, reversed = false }: Props) {
+export default function TarotCard({
+  card,
+  isDrawing = false,
+  isOpen,
+  reversed = false,
+}: Props) {
   const frontAlt = card
     ? `${card.name}${reversed ? " reversed" : ""} tarot card`
     : "Tarot card"
 
   return (
     <article
-      className={`tarot-card-shell ${isOpen ? "is-open" : ""}`}
+      className={`tarot-card-shell ${isDrawing ? "is-drawing" : ""} ${
+        isOpen ? "is-open" : ""
+      }`}
       aria-live="polite"
     >
       <div className="tarot-card-aura" aria-hidden="true" />

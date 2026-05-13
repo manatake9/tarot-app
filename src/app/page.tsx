@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import TarotCard from "@/components/TarotCard"
 import {
@@ -8,64 +8,65 @@ import {
   hasDrawnToday,
   markDrawnToday,
 } from "@/lib/anonymous-user"
-import {
-  drawDailyCard,
-  getLocalDateKey,
-  type DrawResult,
-  type SpreadType,
-} from "@/lib/draw"
+import { drawDailyCard, getLocalDateKey, type DrawResult } from "@/lib/draw"
+
+const DRAW_SPREAD_TYPE = "simple"
+const DRAW_REVEAL_DELAY_MS = 1300
 
 export default function Page() {
-  const [spreadType, setSpreadType] = useState<SpreadType>("simple")
   const [drawResult, setDrawResult] = useState<DrawResult | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [hasDrawn, setHasDrawn] = useState(false)
+  const [isDrawing, setIsDrawing] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [showReading, setShowReading] = useState(false)
+  const revealTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       const dateKey = getLocalDateKey()
       const userId = getUserId()
-      const alreadyDrawn = hasDrawnToday(dateKey, spreadType)
+      const alreadyDrawn = hasDrawnToday(dateKey, DRAW_SPREAD_TYPE)
 
-      setDrawResult(drawDailyCard({ userId, dateKey, spreadType }))
+      setDrawResult(
+        drawDailyCard({ userId, dateKey, spreadType: DRAW_SPREAD_TYPE }),
+      )
       setHasDrawn(alreadyDrawn)
+      setIsDrawing(false)
       setIsOpen(alreadyDrawn)
       setShowReading(false)
       setIsReady(true)
     }, 0)
 
-    return () => window.clearTimeout(timeoutId)
-  }, [spreadType])
+    return () => {
+      window.clearTimeout(timeoutId)
+
+      if (revealTimeoutRef.current !== null) {
+        window.clearTimeout(revealTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleOpen = () => {
-    if (!drawResult || hasDrawn) {
+    if (!drawResult || hasDrawn || isDrawing) {
       return
     }
 
     markDrawnToday(drawResult.dateKey, drawResult.spreadType)
     setHasDrawn(true)
-    setIsOpen(true)
+    setIsDrawing(true)
     setShowReading(false)
-  }
 
-  const handleSpreadTypeChange = (nextSpreadType: SpreadType) => {
-    if (nextSpreadType === spreadType) {
-      return
-    }
-
-    setSpreadType(nextSpreadType)
-    setIsReady(false)
-    setIsOpen(false)
-    setShowReading(false)
+    revealTimeoutRef.current = window.setTimeout(() => {
+      setIsDrawing(false)
+      setIsOpen(true)
+      revealTimeoutRef.current = null
+    }, DRAW_REVEAL_DELAY_MS)
   }
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center overflow-hidden bg-[radial-gradient(circle_at_top,#211433_0%,#100b18_48%,#050407_100%)] px-5 py-10 text-violet-50 sm:px-8">
+    <main className="relative flex min-h-screen flex-col items-center overflow-hidden bg-[radial-gradient(circle_at_top,#241638_0%,#100b18_48%,#050407_100%)] px-5 py-10 text-violet-50 sm:px-8">
       <div className="pointer-events-none absolute inset-0 opacity-70">
-        <div className="absolute left-1/2 top-20 h-72 w-72 -translate-x-1/2 rounded-full bg-violet-500/10 blur-3xl" />
-        <div className="absolute bottom-24 right-[-3rem] h-64 w-64 rounded-full bg-indigo-300/8 blur-3xl" />
         <div className="quiet-stars" />
       </div>
 
@@ -74,11 +75,11 @@ export default function Page() {
           <p className="text-[0.7rem] uppercase tracking-[0.46em] text-violet-100/45">
             Daily Draw / Anonymous Seed
           </p>
-          <h1 className="text-4xl font-light tracking-[0.06em] text-violet-50 sm:text-5xl">
+          <h1 className="text-4xl font-light tracking-normal text-violet-50 sm:text-5xl">
             今日の一枚を観察する
           </h1>
           <p className="mx-auto max-w-xl text-sm leading-8 text-violet-100/62 sm:text-base">
-            ログインなしで、あなたの端末にだけ匿名IDを保存します。同じ日は同じカードになり、解説はカードを読んだ後に開けます。
+            ログインなしで、あなたの端末に匿名IDを保存します。同じ日は同じカードになり、解説はカードをめくったあとに開けます。
           </p>
         </div>
 
@@ -86,48 +87,21 @@ export default function Page() {
           <div className="flex flex-col items-center gap-5">
             <TarotCard
               card={drawResult?.card}
+              isDrawing={isDrawing}
               isOpen={isOpen}
               reversed={drawResult?.reversed}
             />
 
             <div className="flex flex-wrap items-center justify-center gap-3 animate-slow-fade [animation-delay:220ms]">
-              <div
-                className="grid grid-cols-2 overflow-hidden rounded-full border border-violet-100/15 bg-white/[0.045] p-1 text-sm backdrop-blur"
-                aria-label="占い方"
-              >
-                <button
-                  type="button"
-                  onClick={() => handleSpreadTypeChange("simple")}
-                  className={`rounded-full px-4 py-2 transition duration-500 focus:outline-none focus:ring-1 focus:ring-violet-100/45 ${
-                    spreadType === "simple"
-                      ? "bg-violet-100/90 text-zinc-950"
-                      : "text-violet-50/68 hover:bg-white/[0.07]"
-                  }`}
-                >
-                  簡単に占う
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSpreadTypeChange("detailed")}
-                  className={`rounded-full px-4 py-2 transition duration-500 focus:outline-none focus:ring-1 focus:ring-violet-100/45 ${
-                    spreadType === "detailed"
-                      ? "bg-violet-100/90 text-zinc-950"
-                      : "text-violet-50/68 hover:bg-white/[0.07]"
-                  }`}
-                >
-                  詳細に占う
-                </button>
-              </div>
-
               <button
                 onClick={handleOpen}
-                disabled={!isReady || hasDrawn || !drawResult}
+                disabled={!isReady || hasDrawn || isDrawing || !drawResult}
                 className="rounded-full border border-violet-100/20 bg-violet-100/90 px-7 py-3 text-sm font-medium text-zinc-950 shadow-[0_0_28px_rgba(167,139,250,0.16)] transition duration-700 hover:bg-white hover:shadow-[0_0_36px_rgba(196,181,253,0.2)] focus:outline-none focus:ring-1 focus:ring-violet-100 disabled:cursor-default disabled:bg-violet-100/35 disabled:text-violet-950/70 disabled:shadow-none"
               >
                 {!isReady
                   ? "準備中"
                   : hasDrawn
-                    ? "今日は引き終わりました"
+                    ? "今日の一枚は引き終わりました"
                     : "今日のカードを引く"}
               </button>
 
@@ -155,23 +129,24 @@ export default function Page() {
             {drawResult && showReading ? (
               <>
                 <p className="text-[0.68rem] uppercase tracking-[0.38em] text-violet-100/38">
-                  answer check
+                  reading note
                 </p>
                 <div className="mt-4">
                   <p className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
                     keyword
                   </p>
-                  <h2 className="mt-3 text-5xl font-semibold tracking-[0.03em] text-violet-50 sm:text-6xl">
+                  <h2 className="mt-3 text-5xl font-semibold tracking-normal text-violet-50 sm:text-6xl">
                     {drawResult.keyword}
                   </h2>
                   <p className="mt-3 text-sm text-violet-100/48">
-                    {drawResult.card.name} / {drawResult.reversed ? "逆位置" : "正位置"}
+                    {drawResult.card.name} /{" "}
+                    {drawResult.reversed ? "逆位置" : "正位置"}
                   </p>
                 </div>
 
                 <div className="mt-8 border-t border-violet-100/10 pt-6">
                   <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
-                    今日の観察点
+                    今日の観察
                   </h3>
                   <p className="mt-4 text-base leading-8 text-violet-50/72">
                     {drawResult.observation}
@@ -180,7 +155,7 @@ export default function Page() {
 
                 <div className="mt-7 border-t border-violet-100/10 pt-6">
                   <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
-                    QUESTION
+                    問い
                   </h3>
                   <p className="mt-4 text-base leading-8 text-violet-50/72">
                     {drawResult.question}
@@ -189,7 +164,7 @@ export default function Page() {
 
                 <div className="mt-7 border-t border-violet-100/10 pt-6">
                   <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
-                    answer note
+                    読みのメモ
                   </h3>
                   <p className="mt-4 text-sm leading-7 text-violet-50/62">
                     {drawResult.answerNote}
