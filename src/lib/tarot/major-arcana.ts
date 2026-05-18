@@ -668,7 +668,7 @@ const toCardId = (imageName: string) => imageName.toLowerCase().replaceAll(" ", 
 export const majorArcanaCards: TarotCard[] = majorCardSeeds.map(
   ({ imageName, ...seed }) => ({
     id: toCardId(imageName),
-    image: `/cards/${imageName}.png`,
+    image: `/cards/major-arcana/${imageName}.png`,
     ...seed,
   }),
 )
