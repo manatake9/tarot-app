@@ -6,7 +6,7 @@ import { wandMinorCards } from "./tarot/minor-wands"
 
 export type { TarotCard } from "./tarot/types"
 
-export type DeckType = "major" | "full"
+export type DeckType = "major" | "minor" | "full"
 
 export const minorArcanaCards = [
   ...wandMinorCards,
@@ -20,6 +20,10 @@ export const cards = majorArcanaCards
 export const fullDeckCards = [...majorArcanaCards, ...minorArcanaCards]
 
 export function getCardsForDeck(deckType: DeckType) {
+  if (deckType === "minor" && minorArcanaCards.length > 0) {
+    return minorArcanaCards
+  }
+
   if (deckType === "full" && fullDeckCards.length > 0) {
     return fullDeckCards
   }

@@ -1,6 +1,6 @@
 import { getCardsForDeck, type DeckType, type TarotCard } from "./tarot"
 
-export type SpreadType = "simple" | "detailed"
+export type SpreadType = "main" | "advice" | "simple" | "detailed"
 
 export type DrawResult = {
   id: string
@@ -49,6 +49,18 @@ function pickSeeded<T>(items: T[], random: () => number) {
   return items[Math.floor(random() * items.length)]
 }
 
+function getDeckTypeForSpread(spreadType: SpreadType): DeckType {
+  if (spreadType === "advice") {
+    return "minor"
+  }
+
+  if (spreadType === "detailed") {
+    return "full"
+  }
+
+  return "major"
+}
+
 export function getLocalDateKey(date = new Date()) {
   const year = date.getFullYear()
   const month = `${date.getMonth() + 1}`.padStart(2, "0")
@@ -63,7 +75,7 @@ export function drawDailyCard({
 }: DailyDrawInput): DrawResult {
   const seed = `${userId}:${dateKey}:${spreadType}`
   const random = createSeededRandom(seed)
-  const deckType: DeckType = spreadType === "detailed" ? "full" : "major"
+  const deckType = getDeckTypeForSpread(spreadType)
   const card = pickSeeded(getCardsForDeck(deckType), random)
   const reversed = random() < 0.5
   const tensionWords = reversed ? card.tensions.restrictive : card.tensions.expansive

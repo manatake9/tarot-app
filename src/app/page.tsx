@@ -4,36 +4,100 @@ import { useEffect, useRef, useState } from "react"
 
 import TarotCard from "@/components/TarotCard"
 import {
+  cleanupOldDailyDrawKeys,
   getUserId,
   hasDrawnToday,
   markDrawnToday,
 } from "@/lib/anonymous-user"
-import { drawDailyCard, getLocalDateKey, type DrawResult } from "@/lib/draw"
+import {
+  drawDailyCard,
+  getLocalDateKey,
+  type DrawResult,
+  type SpreadType,
+} from "@/lib/draw"
 
-const DRAW_SPREAD_TYPE = "simple"
 const DRAW_REVEAL_DELAY_MS = 1300
+const DRAW_HISTORY_DAYS_TO_KEEP = 45
+
+type DailyDrawType = Extract<SpreadType, "main" | "advice">
+
+const DRAW_TYPES = ["main", "advice"] as const satisfies readonly DailyDrawType[]
+
+const DRAW_SLOT_LABELS = {
+  main: {
+    cardLabel: "main theme",
+    deckLabel: "大アルカナ / 今日の運勢",
+    buttonIdle: "今日の運勢を引く",
+    buttonDone: "今日の運勢は引き終わりました",
+    readingLabel: "今日の主題",
+  },
+  advice: {
+    cardLabel: "minor advice",
+    deckLabel: "小アルカナ / 今日のアドバイス",
+    buttonIdle: "アドバイスを引く",
+    buttonDone: "今日のアドバイスは引き終わりました",
+    readingLabel: "今日のアドバイス",
+  },
+} satisfies Record<
+  DailyDrawType,
+  {
+    buttonDone: string
+    buttonIdle: string
+    cardLabel: string
+    deckLabel: string
+    readingLabel: string
+  }
+>
+
+function createDrawState<T>(value: T) {
+  return {
+    main: value,
+    advice: value,
+  } satisfies Record<DailyDrawType, T>
+}
 
 export default function Page() {
-  const [drawResult, setDrawResult] = useState<DrawResult | null>(null)
+  const [drawResults, setDrawResults] = useState<
+    Record<DailyDrawType, DrawResult | null>
+  >(createDrawState<DrawResult | null>(null))
   const [isReady, setIsReady] = useState(false)
-  const [hasDrawn, setHasDrawn] = useState(false)
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [isOpen, setIsOpen] = useState(false)
+  const [hasDrawn, setHasDrawn] = useState(createDrawState(false))
+  const [isDrawing, setIsDrawing] = useState(createDrawState(false))
+  const [isOpen, setIsOpen] = useState(createDrawState(false))
   const [showReading, setShowReading] = useState(false)
-  const revealTimeoutRef = useRef<number | null>(null)
+  const revealTimeoutRefs = useRef<Partial<Record<DailyDrawType, number>>>({})
 
   useEffect(() => {
+    const revealTimeouts = revealTimeoutRefs.current
     const timeoutId = window.setTimeout(() => {
       const dateKey = getLocalDateKey()
       const userId = getUserId()
-      const alreadyDrawn = hasDrawnToday(dateKey, DRAW_SPREAD_TYPE)
 
-      setDrawResult(
-        drawDailyCard({ userId, dateKey, spreadType: DRAW_SPREAD_TYPE }),
+      cleanupOldDailyDrawKeys(dateKey, DRAW_HISTORY_DAYS_TO_KEEP)
+
+      const nextResults = DRAW_TYPES.reduce(
+        (results, drawType) => ({
+          ...results,
+          [drawType]: drawDailyCard({
+            userId,
+            dateKey,
+            spreadType: drawType,
+          }),
+        }),
+        createDrawState<DrawResult | null>(null),
       )
-      setHasDrawn(alreadyDrawn)
-      setIsDrawing(false)
-      setIsOpen(alreadyDrawn)
+      const nextHasDrawn = DRAW_TYPES.reduce(
+        (results, drawType) => ({
+          ...results,
+          [drawType]: hasDrawnToday(dateKey, drawType),
+        }),
+        createDrawState(false),
+      )
+
+      setDrawResults(nextResults)
+      setHasDrawn(nextHasDrawn)
+      setIsDrawing(createDrawState(false))
+      setIsOpen(nextHasDrawn)
       setShowReading(false)
       setIsReady(true)
     }, 0)
@@ -41,28 +105,38 @@ export default function Page() {
     return () => {
       window.clearTimeout(timeoutId)
 
-      if (revealTimeoutRef.current !== null) {
-        window.clearTimeout(revealTimeoutRef.current)
-      }
+      Object.values(revealTimeouts).forEach((revealTimeout) => {
+        if (revealTimeout !== undefined) {
+          window.clearTimeout(revealTimeout)
+        }
+      })
     }
   }, [])
 
-  const handleOpen = () => {
-    if (!drawResult || hasDrawn || isDrawing) {
+  const handleOpen = (drawType: DailyDrawType) => {
+    const drawResult = drawResults[drawType]
+
+    if (!drawResult || hasDrawn[drawType] || isDrawing[drawType]) {
       return
     }
 
     markDrawnToday(drawResult.dateKey, drawResult.spreadType)
-    setHasDrawn(true)
-    setIsDrawing(true)
+    setHasDrawn((current) => ({ ...current, [drawType]: true }))
+    setIsDrawing((current) => ({ ...current, [drawType]: true }))
     setShowReading(false)
 
-    revealTimeoutRef.current = window.setTimeout(() => {
-      setIsDrawing(false)
-      setIsOpen(true)
-      revealTimeoutRef.current = null
+    revealTimeoutRefs.current[drawType] = window.setTimeout(() => {
+      setIsDrawing((current) => ({ ...current, [drawType]: false }))
+      setIsOpen((current) => ({ ...current, [drawType]: true }))
+      delete revealTimeoutRefs.current[drawType]
     }, DRAW_REVEAL_DELAY_MS)
   }
+
+  const openedDrawTypes = DRAW_TYPES.filter(
+    (drawType) => isOpen[drawType] && drawResults[drawType],
+  )
+  const hasAnyOpenCard = openedDrawTypes.length > 0
+  const dateKey = drawResults.main?.dateKey ?? drawResults.advice?.dateKey
 
   return (
     <main className="relative flex min-h-screen flex-col items-center overflow-hidden bg-[radial-gradient(circle_at_top,#241638_0%,#100b18_48%,#050407_100%)] px-5 py-10 text-violet-50 sm:px-8">
@@ -70,42 +144,65 @@ export default function Page() {
         <div className="quiet-stars" />
       </div>
 
-      <section className="relative z-10 flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-9 text-center">
+      <section className="relative z-10 flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-9 text-center">
         <div className="max-w-2xl space-y-4 animate-slow-fade">
           <p className="text-[0.7rem] uppercase tracking-[0.46em] text-violet-100/45">
             Daily Draw / Anonymous Seed
           </p>
           <h1 className="text-4xl font-light tracking-normal text-violet-50 sm:text-5xl">
-            今日の一枚を観察する
+            今日の一枚と、もう一つの助言
           </h1>
           <p className="mx-auto max-w-xl text-sm leading-8 text-violet-100/62 sm:text-base">
-            ログインなしで、あなたの端末に匿名IDを保存します。同じ日は同じカードになり、解説はカードをめくったあとに開けます。
+            大アルカナは一日の主題を、小アルカナはその主題に向き合うための具体的なアドバイスを映します。
           </p>
         </div>
 
-        <div className="grid w-full items-center gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,1.1fr)] lg:text-left">
+        <div className="grid w-full items-start gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)] lg:text-left">
           <div className="flex flex-col items-center gap-5">
-            <TarotCard
-              card={drawResult?.card}
-              isDrawing={isDrawing}
-              isOpen={isOpen}
-              reversed={drawResult?.reversed}
-            />
+            <div className="grid w-full max-w-2xl gap-6 sm:grid-cols-2">
+              {DRAW_TYPES.map((drawType) => {
+                const drawResult = drawResults[drawType]
+                const labels = DRAW_SLOT_LABELS[drawType]
+
+                return (
+                  <div
+                    key={drawType}
+                    className="flex min-w-0 flex-col items-center gap-4"
+                  >
+                    <p className="min-h-10 text-center text-xs uppercase tracking-[0.28em] text-violet-100/45">
+                      {labels.deckLabel}
+                    </p>
+                    <TarotCard
+                      card={drawResult?.card}
+                      isDrawing={isDrawing[drawType]}
+                      isOpen={isOpen[drawType]}
+                      label={labels.cardLabel}
+                      reversed={drawResult?.reversed}
+                    />
+
+                    <button
+                      onClick={() => handleOpen(drawType)}
+                      disabled={
+                        !isReady ||
+                        hasDrawn[drawType] ||
+                        isDrawing[drawType] ||
+                        !drawResult
+                      }
+                      className="rounded-full border border-violet-100/20 bg-violet-100/90 px-6 py-3 text-sm font-medium text-zinc-950 shadow-[0_0_28px_rgba(167,139,250,0.16)] transition duration-700 hover:bg-white hover:shadow-[0_0_36px_rgba(196,181,253,0.2)] focus:outline-none focus:ring-1 focus:ring-violet-100 disabled:cursor-default disabled:bg-violet-100/35 disabled:text-violet-950/70 disabled:shadow-none"
+                    >
+                      {!isReady
+                        ? "準備中"
+                        : hasDrawn[drawType]
+                          ? labels.buttonDone
+                          : labels.buttonIdle}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
 
             <div className="flex flex-wrap items-center justify-center gap-3 animate-slow-fade [animation-delay:220ms]">
-              <button
-                onClick={handleOpen}
-                disabled={!isReady || hasDrawn || isDrawing || !drawResult}
-                className="rounded-full border border-violet-100/20 bg-violet-100/90 px-7 py-3 text-sm font-medium text-zinc-950 shadow-[0_0_28px_rgba(167,139,250,0.16)] transition duration-700 hover:bg-white hover:shadow-[0_0_36px_rgba(196,181,253,0.2)] focus:outline-none focus:ring-1 focus:ring-violet-100 disabled:cursor-default disabled:bg-violet-100/35 disabled:text-violet-950/70 disabled:shadow-none"
-              >
-                {!isReady
-                  ? "準備中"
-                  : hasDrawn
-                    ? "今日の一枚は引き終わりました"
-                    : "今日のカードを引く"}
-              </button>
-
-              {isOpen ? (
+              {hasAnyOpenCard ? (
                 <button
                   onClick={() => setShowReading((current) => !current)}
                   className="rounded-full border border-violet-100/15 bg-white/[0.045] px-5 py-3 text-sm text-violet-50/72 backdrop-blur transition duration-500 hover:border-violet-100/28 hover:bg-white/[0.07] focus:outline-none focus:ring-1 focus:ring-violet-100/45"
@@ -115,9 +212,10 @@ export default function Page() {
               ) : null}
             </div>
 
-            {drawResult ? (
-              <p className="max-w-sm text-center text-xs leading-6 text-violet-100/38">
-                {drawResult.dateKey} の一枚です。日付が変わるまで引き直しはできません。
+            {dateKey ? (
+              <p className="max-w-md text-center text-xs leading-6 text-violet-100/38">
+                {dateKey}
+                の結果です。日付が変わるまで、同じ種類のカードは引き直せません。
               </p>
             ) : null}
           </div>
@@ -126,55 +224,71 @@ export default function Page() {
             className={`reading-panel ${showReading ? "is-visible" : ""}`}
             aria-hidden={!showReading}
           >
-            {drawResult && showReading ? (
-              <>
+            {showReading && hasAnyOpenCard ? (
+              <div className="space-y-8">
                 <p className="text-[0.68rem] uppercase tracking-[0.38em] text-violet-100/38">
                   reading note
                 </p>
-                <div className="mt-4">
-                  <p className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
-                    keyword
-                  </p>
-                  <h2 className="mt-3 text-5xl font-semibold tracking-normal text-violet-50 sm:text-6xl">
-                    {drawResult.keyword}
-                  </h2>
-                  <p className="mt-3 text-sm text-violet-100/48">
-                    {drawResult.card.name} /{" "}
-                    {drawResult.reversed ? "逆位置" : "正位置"}
-                  </p>
-                </div>
 
-                <div className="mt-8 border-t border-violet-100/10 pt-6">
-                  <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
-                    今日の観察
-                  </h3>
-                  <p className="mt-4 text-base leading-8 text-violet-50/72">
-                    {drawResult.observation}
-                  </p>
-                </div>
+                {openedDrawTypes.map((drawType) => {
+                  const drawResult = drawResults[drawType]
 
-                <div className="mt-7 border-t border-violet-100/10 pt-6">
-                  <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
-                    問い
-                  </h3>
-                  <p className="mt-4 text-base leading-8 text-violet-50/72">
-                    {drawResult.question}
-                  </p>
-                </div>
+                  if (!drawResult) {
+                    return null
+                  }
 
-                <div className="mt-7 border-t border-violet-100/10 pt-6">
-                  <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
-                    読みのメモ
-                  </h3>
-                  <p className="mt-4 text-sm leading-7 text-violet-50/62">
-                    {drawResult.answerNote}
-                  </p>
-                </div>
-              </>
+                  const labels = DRAW_SLOT_LABELS[drawType]
+
+                  return (
+                    <section
+                      key={drawType}
+                      className="border-t border-violet-100/10 pt-6 first:border-t-0 first:pt-0"
+                    >
+                      <p className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
+                        {labels.readingLabel}
+                      </p>
+                      <h2 className="mt-3 text-4xl font-semibold tracking-normal text-violet-50 sm:text-5xl">
+                        {drawResult.keyword}
+                      </h2>
+                      <p className="mt-3 text-sm text-violet-100/48">
+                        {drawResult.card.name} /{" "}
+                        {drawResult.reversed ? "逆位置" : "正位置"}
+                      </p>
+
+                      <div className="mt-7 border-t border-violet-100/10 pt-6">
+                        <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
+                          観察
+                        </h3>
+                        <p className="mt-4 text-base leading-8 text-violet-50/72">
+                          {drawResult.observation}
+                        </p>
+                      </div>
+
+                      <div className="mt-7 border-t border-violet-100/10 pt-6">
+                        <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
+                          問い
+                        </h3>
+                        <p className="mt-4 text-base leading-8 text-violet-50/72">
+                          {drawResult.question}
+                        </p>
+                      </div>
+
+                      <div className="mt-7 border-t border-violet-100/10 pt-6">
+                        <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
+                          読みのメモ
+                        </h3>
+                        <p className="mt-4 text-sm leading-7 text-violet-50/62">
+                          {drawResult.answerNote}
+                        </p>
+                      </div>
+                    </section>
+                  )
+                })}
+              </div>
             ) : (
               <div className="flex min-h-[24rem] items-center justify-center text-center">
                 <p className="max-w-sm text-sm leading-7 text-violet-50/48">
-                  カードを開いたあと、自分なりに読んでから解説を開けます。
+                  カードを開くと、ここに読みが表示されます。
                 </p>
               </div>
             )}

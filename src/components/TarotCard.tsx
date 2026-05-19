@@ -6,6 +6,7 @@ type Props = {
   card?: TarotCardData
   isDrawing?: boolean
   isOpen: boolean
+  label?: string
   reversed?: boolean
 }
 
@@ -13,6 +14,7 @@ export default function TarotCard({
   card,
   isDrawing = false,
   isOpen,
+  label,
   reversed = false,
 }: Props) {
   const frontAlt = card
@@ -58,7 +60,7 @@ export default function TarotCard({
 
       <div className="tarot-card-caption">
         <p className="text-[0.68rem] uppercase tracking-[0.32em] text-violet-100/45">
-          {isOpen ? "drawn card" : "before reading"}
+          {label ?? (isOpen ? "drawn card" : "before reading")}
         </p>
         <h2 className="mt-2 text-center text-2xl font-medium text-violet-50/95">
           {isOpen && card ? card.name : "まだ開かれていない象徴"}
