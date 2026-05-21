@@ -1,5 +1,6 @@
 "use client"
 
+import type { CSSProperties } from "react"
 import { useEffect, useRef, useState } from "react"
 
 import TarotCard from "@/components/TarotCard"
@@ -226,11 +227,11 @@ export default function Page() {
           >
             {showReading && hasAnyOpenCard ? (
               <div className="space-y-8">
-                <p className="text-[0.68rem] uppercase tracking-[0.38em] text-violet-100/38">
+                <p className="reading-kicker text-[0.68rem] uppercase tracking-[0.38em] text-violet-100/38">
                   reading note
                 </p>
 
-                {openedDrawTypes.map((drawType) => {
+                {openedDrawTypes.map((drawType, index) => {
                   const drawResult = drawResults[drawType]
 
                   if (!drawResult) {
@@ -242,7 +243,12 @@ export default function Page() {
                   return (
                     <section
                       key={drawType}
-                      className="border-t border-violet-100/10 pt-6 first:border-t-0 first:pt-0"
+                      className="reading-item border-t border-violet-100/10 pt-6 first:border-t-0 first:pt-0"
+                      style={
+                        {
+                          "--reading-delay": `${1160 + index * 180}ms`,
+                        } as CSSProperties
+                      }
                     >
                       <p className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
                         {labels.readingLabel}
@@ -255,7 +261,7 @@ export default function Page() {
                         {drawResult.reversed ? "逆位置" : "正位置"}
                       </p>
 
-                      <div className="mt-7 border-t border-violet-100/10 pt-6">
+                      <div className="reading-detail mt-7 border-t border-violet-100/10 pt-6">
                         <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
                           観察
                         </h3>
@@ -264,7 +270,7 @@ export default function Page() {
                         </p>
                       </div>
 
-                      <div className="mt-7 border-t border-violet-100/10 pt-6">
+                      <div className="reading-detail mt-7 border-t border-violet-100/10 pt-6">
                         <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
                           問い
                         </h3>
@@ -273,7 +279,7 @@ export default function Page() {
                         </p>
                       </div>
 
-                      <div className="mt-7 border-t border-violet-100/10 pt-6">
+                      <div className="reading-detail mt-7 border-t border-violet-100/10 pt-6">
                         <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
                           読みのメモ
                         </h3>
