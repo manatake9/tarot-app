@@ -18,7 +18,6 @@ import {
 } from "@/lib/draw"
 
 const DRAW_REVEAL_DELAY_MS = 1300
-const DRAW_HISTORY_DAYS_TO_KEEP = 45
 
 type DailyDrawType = Extract<SpreadType, "main" | "advice">
 
@@ -74,7 +73,7 @@ export default function Page() {
       const dateKey = getLocalDateKey()
       const userId = getUserId()
 
-      cleanupOldDailyDrawKeys(dateKey, DRAW_HISTORY_DAYS_TO_KEEP)
+      cleanupOldDailyDrawKeys(dateKey)
 
       const nextResults = DRAW_TYPES.reduce(
         (results, drawType) => ({
@@ -148,7 +147,7 @@ export default function Page() {
       <section className="relative z-10 flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-9 text-center">
         <div className="max-w-2xl space-y-4 animate-slow-fade">
           <p className="text-[0.7rem] uppercase tracking-[0.46em] text-violet-100/45">
-            Daily Draw / Anonymous Seed
+            Daily Draw 
           </p>
           <h1 className="text-4xl font-light tracking-normal text-violet-50 sm:text-5xl">
             今日の一枚と、もう一つの助言

@@ -35,25 +35,7 @@ export function markDrawnToday(dateKey: string, spreadType: SpreadType) {
   localStorage.setItem(getDailyDrawKey(dateKey, spreadType), "drawn")
 }
 
-function toDateTime(dateKey: string) {
-  const [year, month, day] = dateKey.split("-").map(Number)
-
-  if (!year || !month || !day) {
-    return null
-  }
-
-  return Date.UTC(year, month - 1, day)
-}
-
-export function cleanupOldDailyDrawKeys(dateKey: string, daysToKeep = 45) {
-  const currentDateTime = toDateTime(dateKey)
-
-  if (currentDateTime === null) {
-    return
-  }
-
-  const oldestDateTime =
-    currentDateTime - Math.max(daysToKeep - 1, 0) * 24 * 60 * 60 * 1000
+export function cleanupOldDailyDrawKeys(dateKey: string) {
   const keysToRemove: string[] = []
 
   for (let index = 0; index < localStorage.length; index += 1) {
@@ -64,9 +46,8 @@ export function cleanupOldDailyDrawKeys(dateKey: string, daysToKeep = 45) {
     }
 
     const storedDateKey = storageKey.split(":").at(-1)
-    const storedDateTime = storedDateKey ? toDateTime(storedDateKey) : null
 
-    if (storedDateTime !== null && storedDateTime < oldestDateTime) {
+    if (storedDateKey !== dateKey) {
       keysToRemove.push(storageKey)
     }
   }
