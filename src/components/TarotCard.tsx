@@ -38,19 +38,17 @@ export default function TarotCard({
               alt="裏向きのタロットカード"
               width={256}
               height={400}
-              priority
               className="tarot-card-image"
             />
           </div>
 
-          {card ? (
+          {isOpen && card ? (
             <div className="tarot-card-face tarot-card-face-front">
               <Image
                 src={card.image}
                 alt={frontAlt}
                 width={256}
                 height={400}
-                priority
                 className={`tarot-card-image ${reversed ? "is-reversed" : ""}`}
               />
             </div>

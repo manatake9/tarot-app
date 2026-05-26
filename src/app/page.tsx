@@ -11,7 +11,6 @@ import {
   markDrawnToday,
 } from "@/lib/anonymous-user"
 import {
-  drawDailyCard,
   getLocalDateKey,
   type DrawResult,
   type SpreadType,
@@ -69,41 +68,70 @@ export default function Page() {
 
   useEffect(() => {
     const revealTimeouts = revealTimeoutRefs.current
-    const timeoutId = window.setTimeout(() => {
+    const abortController = new AbortController()
+
+    const loadDailyDraws = async () => {
       const dateKey = getLocalDateKey()
       const userId = getUserId()
 
       cleanupOldDailyDrawKeys(dateKey)
 
-      const nextResults = DRAW_TYPES.reduce(
-        (results, drawType) => ({
-          ...results,
-          [drawType]: drawDailyCard({
-            userId,
-            dateKey,
-            spreadType: drawType,
-          }),
-        }),
-        createDrawState<DrawResult | null>(null),
-      )
-      const nextHasDrawn = DRAW_TYPES.reduce(
-        (results, drawType) => ({
-          ...results,
-          [drawType]: hasDrawnToday(dateKey, drawType),
-        }),
-        createDrawState(false),
-      )
+      try {
+        const params = new URLSearchParams({ dateKey, userId })
+        const response = await fetch(`/api/daily-draw?${params}`, {
+          cache: "no-store",
+          signal: abortController.signal,
+        })
 
-      setDrawResults(nextResults)
-      setHasDrawn(nextHasDrawn)
-      setIsDrawing(createDrawState(false))
-      setIsOpen(nextHasDrawn)
-      setShowReading(false)
-      setIsReady(true)
-    }, 0)
+        if (!response.ok) {
+          throw new Error("Failed to load daily draws")
+        }
+
+        const payload = (await response.json()) as {
+          draws: Record<DailyDrawType, DrawResult>
+        }
+        const nextResults = DRAW_TYPES.reduce(
+          (results, drawType) => ({
+            ...results,
+            [drawType]: payload.draws[drawType] ?? null,
+          }),
+          createDrawState<DrawResult | null>(null),
+        )
+        const nextHasDrawn = DRAW_TYPES.reduce(
+          (results, drawType) => ({
+            ...results,
+            [drawType]: hasDrawnToday(dateKey, drawType),
+          }),
+          createDrawState(false),
+        )
+
+        setDrawResults(nextResults)
+        setHasDrawn(nextHasDrawn)
+        setIsDrawing(createDrawState(false))
+        setIsOpen(nextHasDrawn)
+        setShowReading(false)
+      } catch (error) {
+        if (abortController.signal.aborted) {
+          return
+        }
+
+        console.error(error)
+        setDrawResults(createDrawState<DrawResult | null>(null))
+        setHasDrawn(createDrawState(false))
+        setIsDrawing(createDrawState(false))
+        setIsOpen(createDrawState(false))
+        setShowReading(false)
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsReady(true)
+        }
+      }
+    }
+
+    void loadDailyDraws()
 
     return () => {
-      window.clearTimeout(timeoutId)
+      abortController.abort()
 
       Object.values(revealTimeouts).forEach((revealTimeout) => {
         if (revealTimeout !== undefined) {
@@ -215,7 +243,7 @@ export default function Page() {
             {dateKey ? (
               <p className="max-w-md text-center text-xs leading-6 text-violet-100/38">
                 {dateKey}
-                の結果です。日付が変わるまで、同じ種類のカードは引き直せません。
+                の結果です。日付が変わるまで、カードは引き直せません。
               </p>
             ) : null}
           </div>
