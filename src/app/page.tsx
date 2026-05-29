@@ -25,14 +25,14 @@ const DRAW_TYPES = ["main", "advice"] as const satisfies readonly DailyDrawType[
 const DRAW_SLOT_LABELS = {
   main: {
     cardLabel: "main theme",
-    deckLabel: "大アルカナ / 今日の運勢",
+    deckLabel: "今日の運勢",
     buttonIdle: "今日の運勢を引く",
     buttonDone: "今日の運勢は引き終わりました",
     readingLabel: "今日の主題",
   },
   advice: {
-    cardLabel: "full deck advice",
-    deckLabel: "全カード / 今日のアドバイス",
+    cardLabel: "advice",
+    deckLabel: "今日のアドバイス",
     buttonIdle: "アドバイスを引く",
     buttonDone: "今日のアドバイスは引き終わりました",
     readingLabel: "今日のアドバイス",
@@ -181,7 +181,7 @@ export default function Page() {
             今日の一枚と、もう一枚のアドバイス
           </h1>
           <p className="mx-auto max-w-xl text-sm leading-8 text-violet-100/62 sm:text-base">
-            大アルカナは一日の主題を、全カードはその主題に向き合うためのアドバイスを映します。
+            一日の主題とその主題に向き合うためのアドバイスを映します。
           </p>
         </div>
 
