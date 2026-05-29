@@ -51,7 +51,7 @@ function pickSeeded<T>(items: T[], random: () => number) {
 
 function getDeckTypeForSpread(spreadType: SpreadType): DeckType {
   if (spreadType === "advice") {
-    return "minor"
+    return "full"
   }
 
   if (spreadType === "detailed") {

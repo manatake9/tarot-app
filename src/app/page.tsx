@@ -31,8 +31,8 @@ const DRAW_SLOT_LABELS = {
     readingLabel: "今日の主題",
   },
   advice: {
-    cardLabel: "minor advice",
-    deckLabel: "小アルカナ / 今日のアドバイス",
+    cardLabel: "full deck advice",
+    deckLabel: "全カード / 今日のアドバイス",
     buttonIdle: "アドバイスを引く",
     buttonDone: "今日のアドバイスは引き終わりました",
     readingLabel: "今日のアドバイス",
@@ -175,13 +175,13 @@ export default function Page() {
       <section className="relative z-10 flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-9 text-center">
         <div className="max-w-2xl space-y-4 animate-slow-fade">
           <p className="text-[0.7rem] uppercase tracking-[0.46em] text-violet-100/45">
-            Daily Draw 
+            Tarot card reading
           </p>
           <h1 className="text-4xl font-light tracking-normal text-violet-50 sm:text-5xl">
-            今日の一枚と、もう一つの助言
+            今日の一枚と、もう一枚のアドバイス
           </h1>
           <p className="mx-auto max-w-xl text-sm leading-8 text-violet-100/62 sm:text-base">
-            大アルカナは一日の主題を、小アルカナはその主題に向き合うための具体的なアドバイスを映します。
+            大アルカナは一日の主題を、全カードはその主題に向き合うためのアドバイスを映します。
           </p>
         </div>
 
@@ -308,7 +308,7 @@ export default function Page() {
 
                       <div className="reading-detail mt-7 border-t border-violet-100/10 pt-6">
                         <h3 className="text-xs uppercase tracking-[0.32em] text-violet-100/38">
-                          読みのメモ
+                          リーディングのメモ
                         </h3>
                         <p className="mt-4 text-sm leading-7 text-violet-50/62">
                           {drawResult.answerNote}
