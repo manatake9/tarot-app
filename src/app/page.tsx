@@ -64,6 +64,7 @@ export default function Page() {
   const [isDrawing, setIsDrawing] = useState(createDrawState(false))
   const [isOpen, setIsOpen] = useState(createDrawState(false))
   const [showReading, setShowReading] = useState(false)
+  const readingPanelRef = useRef<HTMLElement | null>(null)
   const revealTimeoutRefs = useRef<Partial<Record<DailyDrawType, number>>>({})
 
   useEffect(() => {
@@ -109,7 +110,7 @@ export default function Page() {
         setHasDrawn(nextHasDrawn)
         setIsDrawing(createDrawState(false))
         setIsOpen(nextHasDrawn)
-        setShowReading(false)
+        setShowReading(nextHasDrawn.advice)
       } catch (error) {
         if (abortController.signal.aborted) {
           return
@@ -144,7 +145,12 @@ export default function Page() {
   const handleOpen = (drawType: DailyDrawType) => {
     const drawResult = drawResults[drawType]
 
-    if (!drawResult || hasDrawn[drawType] || isDrawing[drawType]) {
+    if (
+      !drawResult ||
+      hasDrawn[drawType] ||
+      isDrawing[drawType] ||
+      (drawType === "advice" && !isOpen.main)
+    ) {
       return
     }
 
@@ -156,6 +162,17 @@ export default function Page() {
     revealTimeoutRefs.current[drawType] = window.setTimeout(() => {
       setIsDrawing((current) => ({ ...current, [drawType]: false }))
       setIsOpen((current) => ({ ...current, [drawType]: true }))
+
+      if (drawType === "advice") {
+        setShowReading(true)
+        window.setTimeout(() => {
+          readingPanelRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          })
+        }, 120)
+      }
+
       delete revealTimeoutRefs.current[drawType]
     }, DRAW_REVEAL_DELAY_MS)
   }
@@ -191,6 +208,7 @@ export default function Page() {
               {DRAW_TYPES.map((drawType) => {
                 const drawResult = drawResults[drawType]
                 const labels = DRAW_SLOT_LABELS[drawType]
+                const isAdviceLocked = drawType === "advice" && !isOpen.main
 
                 return (
                   <div
@@ -214,7 +232,8 @@ export default function Page() {
                         !isReady ||
                         hasDrawn[drawType] ||
                         isDrawing[drawType] ||
-                        !drawResult
+                        !drawResult ||
+                        isAdviceLocked
                       }
                       className="rounded-full border border-violet-100/20 bg-violet-100/90 px-6 py-3 text-sm font-medium text-zinc-950 shadow-[0_0_28px_rgba(167,139,250,0.16)] transition duration-700 hover:bg-white hover:shadow-[0_0_36px_rgba(196,181,253,0.2)] focus:outline-none focus:ring-1 focus:ring-violet-100 disabled:cursor-default disabled:bg-violet-100/35 disabled:text-violet-950/70 disabled:shadow-none"
                     >
@@ -230,7 +249,7 @@ export default function Page() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-3 animate-slow-fade [animation-delay:220ms]">
-              {hasAnyOpenCard ? (
+              {false ? (
                 <button
                   onClick={() => setShowReading((current) => !current)}
                   className="rounded-full border border-violet-100/15 bg-white/[0.045] px-5 py-3 text-sm text-violet-50/72 backdrop-blur transition duration-500 hover:border-violet-100/28 hover:bg-white/[0.07] focus:outline-none focus:ring-1 focus:ring-violet-100/45"
@@ -251,6 +270,7 @@ export default function Page() {
           <aside
             className={`reading-panel ${showReading ? "is-visible" : ""}`}
             aria-hidden={!showReading}
+            ref={readingPanelRef}
           >
             {showReading && hasAnyOpenCard ? (
               <div className="space-y-8">
