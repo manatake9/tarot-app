@@ -243,7 +243,7 @@ export default function Page() {
               {false ? (
                 <button
                   onClick={() => undefined}
-                  className="rounded-full border border-violet-100/15 bg-white/[0.045] px-5 py-3 text-sm text-violet-50/72 backdrop-blur transition duration-500 hover:border-violet-100/28 hover:bg-white/[0.07] focus:outline-none focus:ring-1 focus:ring-violet-100/45"
+                  className="rounded-full border border-violet-100/15 bg-white/4.5 px-5 py-3 text-sm text-violet-50/72 backdrop-blur transition duration-500 hover:border-violet-100/28 hover:bg-white/[0.07] focus:outline-none focus:ring-1 focus:ring-violet-100/45"
                 >
                   {showReading ? "解説を閉じる" : "解説を見る"}
                 </button>
@@ -329,7 +329,7 @@ export default function Page() {
                 })}
               </div>
             ) : (
-              <div className="flex min-h-[24rem] items-center justify-center text-center">
+              <div className="flex min-h-96 items-center justify-center text-center">
                 <p className="max-w-sm text-sm leading-7 text-violet-50/48">
                   カードを開くと、ここに読みが表示されます。
                 </p>
