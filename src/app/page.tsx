@@ -63,8 +63,6 @@ export default function Page() {
   const [hasDrawn, setHasDrawn] = useState(createDrawState(false))
   const [isDrawing, setIsDrawing] = useState(createDrawState(false))
   const [isOpen, setIsOpen] = useState(createDrawState(false))
-  const [showReading, setShowReading] = useState(false)
-  const readingPanelRef = useRef<HTMLElement | null>(null)
   const revealTimeoutRefs = useRef<Partial<Record<DailyDrawType, number>>>({})
 
   useEffect(() => {
@@ -110,7 +108,6 @@ export default function Page() {
         setHasDrawn(nextHasDrawn)
         setIsDrawing(createDrawState(false))
         setIsOpen(nextHasDrawn)
-        setShowReading(nextHasDrawn.advice)
       } catch (error) {
         if (abortController.signal.aborted) {
           return
@@ -121,7 +118,6 @@ export default function Page() {
         setHasDrawn(createDrawState(false))
         setIsDrawing(createDrawState(false))
         setIsOpen(createDrawState(false))
-        setShowReading(false)
       } finally {
         if (!abortController.signal.aborted) {
           setIsReady(true)
@@ -157,21 +153,10 @@ export default function Page() {
     markDrawnToday(drawResult.dateKey, drawResult.spreadType)
     setHasDrawn((current) => ({ ...current, [drawType]: true }))
     setIsDrawing((current) => ({ ...current, [drawType]: true }))
-    setShowReading(false)
 
     revealTimeoutRefs.current[drawType] = window.setTimeout(() => {
       setIsDrawing((current) => ({ ...current, [drawType]: false }))
       setIsOpen((current) => ({ ...current, [drawType]: true }))
-
-      if (drawType === "advice") {
-        setShowReading(true)
-        window.setTimeout(() => {
-          readingPanelRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          })
-        }, 120)
-      }
 
       delete revealTimeoutRefs.current[drawType]
     }, DRAW_REVEAL_DELAY_MS)
@@ -181,10 +166,16 @@ export default function Page() {
     (drawType) => isOpen[drawType] && drawResults[drawType],
   )
   const hasAnyOpenCard = openedDrawTypes.length > 0
+  const showReading = DRAW_TYPES.every(
+    (drawType) => isOpen[drawType] && drawResults[drawType],
+  )
   const dateKey = drawResults.main?.dateKey ?? drawResults.advice?.dateKey
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center overflow-hidden bg-[radial-gradient(circle_at_top,#241638_0%,#100b18_48%,#050407_100%)] px-5 py-10 text-violet-50 sm:px-8">
+    <main className="tarot-page relative flex min-h-screen flex-col items-center overflow-hidden px-5 py-10 text-violet-50 sm:px-8">
+      <div className="tarot-atmosphere" aria-hidden="true" />
+      <div className="tarot-constellation" aria-hidden="true" />
+      <div className="tarot-vignette" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0 opacity-70">
         <div className="quiet-stars" />
       </div>
@@ -235,7 +226,7 @@ export default function Page() {
                         !drawResult ||
                         isAdviceLocked
                       }
-                      className="rounded-full border border-violet-100/20 bg-violet-100/90 px-6 py-3 text-sm font-medium text-zinc-950 shadow-[0_0_28px_rgba(167,139,250,0.16)] transition duration-700 hover:bg-white hover:shadow-[0_0_36px_rgba(196,181,253,0.2)] focus:outline-none focus:ring-1 focus:ring-violet-100 disabled:cursor-default disabled:bg-violet-100/35 disabled:text-violet-950/70 disabled:shadow-none"
+                      className="draw-button"
                     >
                       {!isReady
                         ? "準備中"
@@ -251,7 +242,7 @@ export default function Page() {
             <div className="flex flex-wrap items-center justify-center gap-3 animate-slow-fade [animation-delay:220ms]">
               {false ? (
                 <button
-                  onClick={() => setShowReading((current) => !current)}
+                  onClick={() => undefined}
                   className="rounded-full border border-violet-100/15 bg-white/[0.045] px-5 py-3 text-sm text-violet-50/72 backdrop-blur transition duration-500 hover:border-violet-100/28 hover:bg-white/[0.07] focus:outline-none focus:ring-1 focus:ring-violet-100/45"
                 >
                   {showReading ? "解説を閉じる" : "解説を見る"}
@@ -270,7 +261,6 @@ export default function Page() {
           <aside
             className={`reading-panel ${showReading ? "is-visible" : ""}`}
             aria-hidden={!showReading}
-            ref={readingPanelRef}
           >
             {showReading && hasAnyOpenCard ? (
               <div className="space-y-8">
