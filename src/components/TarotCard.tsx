@@ -1,5 +1,6 @@
 import Image from "next/image"
 
+import { getSuitTransform } from "@/lib/tarot-card-display"
 import type { TarotCard as TarotCardData } from "@/lib/tarot"
 
 type Props = {
@@ -20,6 +21,7 @@ export default function TarotCard({
   const frontAlt = card
     ? `${card.name}${reversed ? " reversed" : ""} tarot card`
     : "Tarot card"
+  const transform = card ? getSuitTransform(card) : null
 
   return (
     <article
@@ -36,21 +38,32 @@ export default function TarotCard({
             <Image
               src="/cards/back.png"
               alt="裏向きのタロットカード"
-              width={256}
-              height={400}
+              width={1024}
+              height={1792}
               className="tarot-card-image"
             />
           </div>
 
           {isOpen && card ? (
             <div className="tarot-card-face tarot-card-face-front">
-              <Image
-                src={card.image}
-                alt={frontAlt}
-                width={256}
-                height={400}
-                className={`tarot-card-image ${reversed ? "is-reversed" : ""}`}
-              />
+              <div
+                className="tarot-card-image-transform"
+                style={{
+                  transform: `translateY(${transform?.offsetY ?? 0}px) scale(${
+                    transform?.scale ?? 1
+                  })`,
+                }}
+              >
+                <Image
+                  src={card.image}
+                  alt={frontAlt}
+                  width={1024}
+                  height={1792}
+                  className={`tarot-card-image ${
+                    reversed ? "is-reversed" : ""
+                  }`}
+                />
+              </div>
             </div>
           ) : null}
         </div>
